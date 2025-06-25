@@ -39,8 +39,10 @@ func permute1(nums []int) [][]int {
 			//尝试：做出选择，更新状态
 			used[i] = true
 			path = append(path, nums[i])
+
 			// 进行下一轮选择
 			backtrack()
+
 			// 回退：撤销选择，恢复到之前的状态
 			path = path[:len(path)-1]
 			used[i] = false
@@ -94,6 +96,15 @@ func permute2(nums []int) [][]int {
 	backtrack()
 	return res
 }
+
+//func main() {
+//	//res := permute1([]int{7, 199, 1})
+//	res := permute2([]int{7, 199, 7})
+//
+//	for _, v := range res {
+//		fmt.Println(v)
+//	}
+//}
 
 type TreeNode struct {
 	Val   interface{}
@@ -150,45 +161,125 @@ func preOrderSearchPaths(root *TreeNode) [][]*TreeNode {
 	return res
 }
 
-func main() {
-	//res := permute1([]int{7, 199, 1})
-	//res := permute2([]int{7, 199, 7})
-	//
-	//for _, v := range res {
-	//	fmt.Println(v)
-	//}
+//
+//func main() {
+//	// 构造示例二叉树
+//	/*
+//	        1
+//	      /   \
+//	     2     3
+//	    / \   / \
+//	   7   4 5   7
+//	          \
+//	           3 (无效路径，包含3)
+//	*/
+//	root := &TreeNode{Val: 1}
+//	root.Left = &TreeNode{Val: 2}
+//	root.Right = &TreeNode{Val: 3}
+//	root.Left.Left = &TreeNode{Val: 7}
+//	root.Left.Right = &TreeNode{Val: 4}
+//	root.Right.Left = &TreeNode{Val: 5}
+//	root.Right.Right = &TreeNode{Val: 7}
+//	root.Right.Left.Right = &TreeNode{Val: 3}
+//
+//	// 搜索路径
+//	paths := preOrderSearchPaths(root)
+//
+//	// 打印结果
+//	fmt.Println("符合条件的路径：")
+//	for _, path := range paths {
+//		for i, node := range path {
+//			if i > 0 {
+//				fmt.Print(" -> ")
+//			}
+//			fmt.Print(node.Val)
+//		}
+//		fmt.Println()
+//	}
+//}
 
-	// 构造示例二叉树
-	/*
-	        1
-	      /   \
-	     2     3
-	    / \   / \
-	   7   4 5   7
-	          \
-	           3 (无效路径，包含3)
-	*/
-	root := &TreeNode{Val: 1}
-	root.Left = &TreeNode{Val: 2}
-	root.Right = &TreeNode{Val: 3}
-	root.Left.Left = &TreeNode{Val: 7}
-	root.Left.Right = &TreeNode{Val: 4}
-	root.Right.Left = &TreeNode{Val: 5}
-	root.Right.Right = &TreeNode{Val: 7}
-	root.Right.Left.Right = &TreeNode{Val: 3}
+//给定一个正整数数组 nums 和一个目标正整数 target ，请找出所有可能的组合，使得组合中的元素和等于 target 。
+//给定数组无重复元素，每个元素可以被选取多次。请以列表形式返回这些组合，列表中不应包含重复组合。
+//输入集合中的元素可以被无限次重复选取。
+/* 回溯算法：子集和 I */
+/* 求解子集和 I（包含重复子集） */
+func subsetSumINaive(nums []int, target int) [][]int {
+	path := make([]int, 0)  // 状态（子集）
+	res := make([][]int, 0) // 结果列表（子集列表）
 
-	// 搜索路径
-	paths := preOrderSearchPaths(root)
-
-	// 打印结果
-	fmt.Println("符合条件的路径：")
-	for _, path := range paths {
-		for i, node := range path {
-			if i > 0 {
-				fmt.Print(" -> ")
-			}
-			fmt.Print(node.Val)
+	var dfs func(start, total int)
+	dfs = func(start, total int) {
+		// 子集和等于 target 时，记录解
+		if target == total {
+			tmp := append([]int{}, path...)
+			res = append(res, tmp)
+			return
 		}
-		fmt.Println()
+		if total > target {
+			return
+		}
+
+		// 遍历所有选择
+		for i := start; i < len(nums); i++ {
+			// 剪枝：若子集和超过 target ，则跳过该选择
+			if total+nums[i] > target {
+				continue
+			}
+			// 选择 nums[i]
+			path = append(path, nums[i])
+			// 进行下一轮选择
+			dfs(i, total+nums[i])
+			// 回溯
+			path = path[:len(path)-1]
+		}
+	}
+
+	dfs(0, 0)
+	return res
+}
+
+// 给定一个正整数数组 nums 和一个目标正整数 target ，请找出所有可能的组合，使得组合中的元素和等于 target 。
+// 给定数组可能包含重复元素，每个元素只可被选择一次。请以列表形式返回这些组合，列表中不应包含重复组合。
+func subsetSumINaive2(nums []int, target int) [][]int {
+	sort.Ints(nums) // 排序以便剪枝与去重
+	var res [][]int
+	var path []int
+
+	var dfs func(start int, total int)
+	dfs = func(start int, total int) {
+		if total == target {
+			tmp := append([]int{}, path...)
+			res = append(res, tmp)
+			return
+		}
+		if total > target {
+			return
+		}
+
+		for i := start; i < len(nums); i++ {
+			// 跳过同层重复元素（避免重复组合）
+			if i > start && nums[i] == nums[i-1] {
+				continue
+			}
+			// 选择 nums[i]
+			path = append(path, nums[i])
+			// 因为每个元素只能用一次，递归时从 i+1 开始
+			dfs(i+1, total+nums[i])
+			// 回溯
+			path = path[:len(path)-1]
+		}
+	}
+
+	dfs(0, 0)
+	return res
+}
+
+func main() {
+	nums := []int{2, 3, 4, 7}
+	target := 7
+	combinations := subsetSumINaive2(nums, target)
+
+	for _, comb := range combinations {
+		fmt.Println(comb)
 	}
 }
