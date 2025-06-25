@@ -51,7 +51,7 @@ func permute1(nums []int) [][]int {
 	return res
 }
 
-// 全排列问题1
+// 全排列问题2
 // 考虑相等元素的情况
 // 输入一个整数数组，数组中可能包含重复元素，返回所有不重复的排列。
 func permute2(nums []int) [][]int {
@@ -95,11 +95,100 @@ func permute2(nums []int) [][]int {
 	return res
 }
 
+type TreeNode struct {
+	Val   interface{}
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+/*
+前序遍历：例题三
+在二叉树中搜索所有值为7的节点，请返回根节点到这些节点的路径，
+并要求路径中不包含值为3的节点。
+*/
+func preOrderIII(root *TreeNode, res *[][]*TreeNode, path *[]*TreeNode) {
+	// 剪枝
+	if root == nil || root.Val == 3 {
+		return
+	}
+	// 尝试
+	*path = append(*path, root)
+	if root.Val.(int) == 7 {
+		*res = append(*res, append([]*TreeNode{}, *path...))
+	}
+	preOrderIII(root.Left, res, path)
+	preOrderIII(root.Right, res, path)
+	// 回退
+	*path = (*path)[:len(*path)-1]
+}
+
+func preOrderSearchPaths(root *TreeNode) [][]*TreeNode {
+	var res [][]*TreeNode
+	var path []*TreeNode
+
+	var dfs func(node *TreeNode)
+	dfs = func(node *TreeNode) {
+		// 剪枝
+		if node == nil || node.Val == 3 {
+			return
+		}
+		// 尝试
+		path = append(path, node)
+		if node.Val == 7 {
+			tmp := make([]*TreeNode, len(path))
+			copy(tmp, path)
+			res = append(res, tmp)
+		}
+
+		dfs(node.Left)
+		dfs(node.Right)
+		// 回退
+		path = path[:len(path)-1]
+	}
+
+	dfs(root)
+	return res
+}
+
 func main() {
 	//res := permute1([]int{7, 199, 1})
-	res := permute2([]int{7, 199, 7})
+	//res := permute2([]int{7, 199, 7})
+	//
+	//for _, v := range res {
+	//	fmt.Println(v)
+	//}
 
-	for _, v := range res {
-		fmt.Println(v)
+	// 构造示例二叉树
+	/*
+	        1
+	      /   \
+	     2     3
+	    / \   / \
+	   7   4 5   7
+	          \
+	           3 (无效路径，包含3)
+	*/
+	root := &TreeNode{Val: 1}
+	root.Left = &TreeNode{Val: 2}
+	root.Right = &TreeNode{Val: 3}
+	root.Left.Left = &TreeNode{Val: 7}
+	root.Left.Right = &TreeNode{Val: 4}
+	root.Right.Left = &TreeNode{Val: 5}
+	root.Right.Right = &TreeNode{Val: 7}
+	root.Right.Left.Right = &TreeNode{Val: 3}
+
+	// 搜索路径
+	paths := preOrderSearchPaths(root)
+
+	// 打印结果
+	fmt.Println("符合条件的路径：")
+	for _, path := range paths {
+		for i, node := range path {
+			if i > 0 {
+				fmt.Print(" -> ")
+			}
+			fmt.Print(node.Val)
+		}
+		fmt.Println()
 	}
 }
